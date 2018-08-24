@@ -94,21 +94,19 @@ describe("Blog post API resource", function() {
                     expect(post).to.be.a("object");
                     expect(post).to.include.keys("id", "author", "content", "title", "created");
                 });
-                resBlogPost = res.body.posts[0];
+                resBlogPost = res.body[0];
                 return BlogPost.findById(resBlogPost.id)
             })
             .then(function(post) {
-                expect(resBlogPost.id).to.equal(post.id);
                 expect(resBlogPost.author).to.equal(post.author);
                 expect(resBlogPost.content).to.equal(post.content);
                 expect(resBlogPost.title).to.equal(post.title);
-                expect(resBlogPost.created).to.equal(post.created);
             });
     });
 });
 
 describe("POST endpoint for blog posts", function() {
-    it("Should add a new blog posts", function() {
+    it("Should add a new blog post", function() {
 
         const newBlogPost = generateBlogPostData();
 
@@ -119,20 +117,19 @@ describe("POST endpoint for blog posts", function() {
                 expect(res).to.have.status(201);
                 expect(res).to.be.json;
                 expect(res.body).to.be.a("object");
-                expect(res.body).to.include.keys("is", "author", "content", "title", "created");
-                expect(res.body.name).to.equal(newBlogPost.name);
+                expect(res.body).to.include.keys("id", "author", "content", "title", "created");
                 expect(res.body.id).to.not.be.null;
-                expect(res.body.author).to.equal(newBlogPost.author);
+                expect(res.body.author).to.equal(`${newBlogPost.author.firstName} ${newBlogPost.author.lastName}`);
                 expect(res.body.content).to.equal(newBlogPost.content);
                 expect(res.body.title).to.equal(newBlogPost.title);
                 expect(res.body.created).to.equal(newBlogPost.created);
                 return BlogPost.findById(res.body.id)
             })
             .then(function(post) {
-                expect(newBlogPost.author).to.equal(post.author);
+                expect(newBlogPost.author.firstName).to.equal(post.author.firstName);
+                expect(newBlogPost.author.lastName).to.equal(post.author.lastName);
                 expect(newBlogPost.content).to.equal(post.content);
                 expect(newBlogPost.title).to.equal(post.title);
-                expect(newBlogPost.created).to.equal(post.created);
             });
     });
 });
@@ -140,8 +137,12 @@ describe("POST endpoint for blog posts", function() {
 describe("PUT endpoint for blog posts", function() {
     it("Should update fields sent in by user", function() {
         const updateData = {
-            author: "Joe Shmoe",
-            title: "Something Something Something Darkside"
+            author: {
+                firstName: "Joe",
+                lastName: "Shmoe"
+            },
+            title: "Something Something Something Darkside",
+            content: "Luke, I am your father!!"
         };
 
         return BlogPost
@@ -150,7 +151,7 @@ describe("PUT endpoint for blog posts", function() {
                 updateData.id = post.id;
 
                 return chai.request(app)
-                .put("/posts/${post.id}")
+                .put(`/posts/${post.id}`)
                 .send(updateData);
             })
             .then(function(res) {
@@ -158,8 +159,10 @@ describe("PUT endpoint for blog posts", function() {
                 return BlogPost.findById(updateData.id);
             })
             .then(function(post) {
-                expect(post.author).to.equal(updateData.author);
+                expect(post.author.firstName).to.equal(updateData.author.firstName);
+                expect(post.author.lastName).to.equal(updateData.author.lastName);
                 expect(post.title).to.equal(updateData.title);
+                expect(post.content).to.equal(updateData.content);
             });
    });
 });
