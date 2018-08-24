@@ -107,3 +107,80 @@ describe("Blog post API resource", function() {
     });
 });
 
+describe("POST endpoint for blog posts", function() {
+    it("Should add a new blog posts", function() {
+
+        const newBlogPost = generateBlogPostData();
+
+        return chai.request(app)
+            .post("/posts")
+            .send(newBlogPost)
+            .then(function(res) {
+                expect(res).to.have.status(201);
+                expect(res).to.be.json;
+                expect(res.body).to.be.a("object");
+                expect(res.body).to.include.keys("is", "author", "content", "title", "created");
+                expect(res.body.name).to.equal(newBlogPost.name);
+                expect(res.body.id).to.not.be.null;
+                expect(res.body.author).to.equal(newBlogPost.author);
+                expect(res.body.content).to.equal(newBlogPost.content);
+                expect(res.body.title).to.equal(newBlogPost.title);
+                expect(res.body.created).to.equal(newBlogPost.created);
+                return BlogPost.findById(res.body.id)
+            })
+            .then(function(post) {
+                expect(newBlogPost.author).to.equal(post.author);
+                expect(newBlogPost.content).to.equal(post.content);
+                expect(newBlogPost.title).to.equal(post.title);
+                expect(newBlogPost.created).to.equal(post.created);
+            });
+    });
+});
+
+describe("PUT endpoint for blog posts", function() {
+    it("Should update fields sent in by user", function() {
+        const updateData = {
+            author: "Joe Shmoe",
+            title: "Something Something Something Darkside"
+        };
+
+        return BlogPost
+            .findOne()
+            .then(function(post) {
+                updateData.id = post.id;
+
+                return chai.request(app)
+                .put("/posts/${post.id}")
+                .send(updateData);
+            })
+            .then(function(res) {
+                expect(res).to.have.status(204);
+                return BlogPost.findById(updateData.id);
+            })
+            .then(function(post) {
+                expect(post.author).to.equal(updateData.author);
+                expect(post.title).to.equal(updateData.title);
+            });
+   });
+});
+
+describe("DELETE endpoint for blog posts", function() {
+    it("Should delete a blog post based on its id", function() {
+        let blogPost;
+
+        return BlogPost
+            .findOne()
+            .then(function(_blogPost) {
+                blogPost = _blogPost;
+
+                return chai.request(app).delete(`/posts/${blogPost.id}`);
+            })
+            .then(function(res) {
+                expect(res).to.have.status(204);
+                return BlogPost.findById(blogPost.id);
+            })
+            .then(function(_blogPost) {
+                expect(_blogPost).to.be.null;
+            });
+    });
+});
